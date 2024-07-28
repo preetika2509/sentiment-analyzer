@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analysis</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+    
+</head>
+<body>
+    <div class="container">
+        <h1>Sentiment Analysis Tool</h1>
+        
+        <!-- Single Review Form -->
+        <div class="form-section">
+            <h2>Single Review Analysis</h2>
+            <form id="singleReviewForm" action="/predict" method="POST">
+                <textarea name="review" placeholder="Enter your review here..." required></textarea>
+                <button type="submit">Predict</button>
+            </form>
+            <div id="singleResult"></div>
+        </div>
+
+        <!-- CSV Upload Form -->
+        <div class="form-section">
+            <h2>Bulk Review Analysis</h2>
+            <form id="csvUploadForm" action="/predict" method="POST" enctype="multipart/form-data">
+                <input type="file" name="file" accept=".csv" required>
+                <button type="submit">Predict</button>
+            </form>
+            <div id="bulkResult"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('singleReviewForm').onsubmit = async function(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const review = formData.get('review');
+
+            const response = await fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: review })
+            });
+
+            const result = await response.json();
+            document.getElementById('singleResult').innerText = result.prediction;
+        };
+
+        document.getElementById('csvUploadForm').onsubmit = async function(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+
+            const response = await fetch('/predict', {
+                method: 'POST',
+                body: formData
+            });
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Predictions.csv';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        };
+    </script>
+</body>
+</html>
